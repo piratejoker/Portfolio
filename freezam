@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import os
+from pathlib import Path
+import pickle
+
+import class_sound as cs
+import class_library as cl
+
+
+def main():
+    ###  Basic Parsing
+    parser = argparse.ArgumentParser(
+            description="""A fully free-as-in-freedom implimentation of the
+                           well-known music identification algorithm.""")
+    parser.add_argument('-d', '--debug',
+                        help="Print lots of debugging statements",
+                        action="store_const",
+                        dest="logginglevel",
+                        const=logging.DEBUG,
+                        default=logging.WARNING)
+    parser.add_argument("-v", "--verbose",
+                        help="Output errors to standard error.",
+                        action="store_const", dest="logginglevel",
+                        const=logging.INFO)
+
+    actions = parser.add_subparsers(dest='command')
+    add_par = actions.add_parser("add",
+                                 help="Add a song to the library.")
+    rem_par = actions.add_parser("remove",
+                                 help="Remove a song to the library.")
+    ide_par = actions.add_parser("identify",
+                                 help="""Identify a snippet as a song to the
+                                        library.""")
+    lis_par = actions.add_parser("list",
+                                 help="List the contents of the library.")
+    update_par = actions.add_parser("update",
+                                    help="Update song information.")
+    search_par = actions.add_parser("search",
+                                    help="Search for song.")
+
+    add_par.add_argument("--title", 
+                         type=str,
+                         help="Optional track title.")
+    add_par.add_argument("--artist",
+                         type=str,
+                         help="Optional track artist name.")
+    add_par.add_argument("add_file",
+                         type=str,
+                         help="The file, remote or local, to be added.")
+
+    rem_par.add_argument("rem_file",
+                         type=str,
+                         help="The file to be removed.")
+
+    ide_par.add_argument("snippet_file",
+                         type=str,
+                         help="The snippet to be identified.")
+
+    update_par.add_argument("--title",
+                            type=str,
+                            default="",
+                            help="Track title.")
+
+    update_par.add_argument("--artist",
+                            type=str,
+                            default="",
+                            help="Track artist.")
+
+    update_par.add_argument("sound_file",
+                            type=str,
+                            help="""The file which will have its information
+                                    updated.""")
+    search_par.add_argument("search_file",
+                            type=str,
+                            help="""The file to search for""")
+    args = parser.parse_args()
+
+    ###  Logging Functionality
+    log = logging.getLogger("freezam_error")
+    log.setLevel(args.logginglevel)
+    formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    hand = logging.FileHandler('freezam.log')
+    hand.setLevel(args.logginglevel)  # same level
+    hand.setFormatter(formatter)  # same format 
+    log.addHandler(hand)
+    if args.logginglevel == logging.INFO:
+        con = logging.StreamHandler()
+        con.setLevel(args.logginglevel)  # same level
+        con.setFormatter(formatter)  # same format 
+        log.addHandler(con)
+
+    ###  Database Connection and Load
+    #song_library = cl.Library()
+    if os.path.isfile("library.pkl"):
+        with open("library.pkl", 'rb') as file:
+            song_library = pickle.load(file)
+    else:
+        song_library = cl.Library()
+
+    ###  Evaluation
+    if args.command == "add":
+        meta = [args.artist, args.title]
+        if os.path.isdir(args.add_file):
+            for filename in Path(args.add_file).rglob("*.wav"):
+                song_library.add(str(filename))
+                log.info(str(filename) + " added")
+        else:
+            song_library.add(args.add_file, meta)
+            log.info(args.add_file + " added")
+
+        with open("library.pkl", 'wb') as file:  # Overwrites any existing file.
+            pickle.dump(song_library, file, pickle.HIGHEST_PROTOCOL)
+
+    if args.command == "remove":
+        song_library.remove(args.rem_file)
+        log.info(args.rem_file + " removed")
+        with open("library.pkl", 'wb') as file:  # Overwrites any existing file.
+            pickle.dump(song_library, file, pickle.HIGHEST_PROTOCOL)
+    
+    if args.command == "search":
+        found = song_library.search(args.search_file)
+        if found:
+            log.info(args.search_file + " found")
+        else:
+            log.info(args.search_file + " not found")
+
+    if args.command == "identify":
+        if song_library.identify(args.snippet_file):
+            log.info(args.snippet_file + " identified")
+        else:
+            log.info(args.snippet_file + " not identified")
+
+    if args.command == "list":
+        song_library.list_lib()
+        log.info("Library Listed")
+    
+
+if __name__ == '__main__':
+    main()

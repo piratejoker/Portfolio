@@ -1,0 +1,9 @@
+2019-12-10 21:08:43,196 - freezam_error - WARNING - This is a warning.
+2019-12-10 21:08:43,196 - freezam_error - ERROR - This is an error.
+2019-12-10 21:08:47,218 - freezam_error - INFO - This should be verbose.
+2019-12-10 21:08:47,218 - freezam_error - WARNING - This is a warning.
+2019-12-10 21:08:47,218 - freezam_error - ERROR - This is an error.
+2019-12-10 21:08:47,218 - freezam_error - INFO - Library Listed
+2019-12-10 21:12:00,663 - freezam_error - INFO - Data/Songs/bass-mono.wav added
+2019-12-10 22:24:39,532 - freezam_error - INFO - Data/Songs/bass-snippet.wav identified
+2019-12-10 22:24:49,869 - freezam_error - INFO - Data/Songs/bass-snippet.wav identified
